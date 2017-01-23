@@ -2,6 +2,9 @@ from .base import FunctionalTest
 
 class ItemValidationTest(FunctionalTest):
 
+	def get_error_element(self):
+		return self.browser.find_element_by_css_selector('.has-error')
+
 	def test_cannot_add_empty_list_items(self):
 		# Edith goes to the home page and accidentally tries to submit 
 		# am empty list item. She hits enter on the empty input box
@@ -10,7 +13,7 @@ class ItemValidationTest(FunctionalTest):
 
 		# The homepage refreshes, and there is an error message saying
 		# that list items cannot be blank
-		error = self.browser.find_element_by_css_selector('.has-error')
+		error = self.get_error_element()
 		self.assertEqual(error.text, "You can't have an empty list item")
 
 		# She tries again with some test for the item, which now works
@@ -22,7 +25,7 @@ class ItemValidationTest(FunctionalTest):
 
 		# She recieves a similar warning on the list page
 		self.check_for_row_in_list_table('1: Buy milk')
-		error = self.browser.find_element_by_css_selector('.has-error')
+		error = self.get_error_element()
 		self.assertEqual(error.text, "You can't have an empty list item")
 
 		# And she can corrits it by filling some text in
@@ -41,6 +44,20 @@ class ItemValidationTest(FunctionalTest):
 
 		# She sees a helpful error message
 		self.check_for_row_in_list_table('1: Buy wellies')
-		error = self.browser.find_element_by_css_selector('.has-error')
+		error = self.get_error_element()
 		self.assertEqual(error.text, "You've already got this in your list")
-		
+
+	def test_error_messages_are_cleared_on_input(self):
+		# Edith starts a new list in a way that causes a calidation errror:
+		self.browser.get(self.server_url)
+		self.get_item_input_box().send_keys('\n')
+		error = self.get_error_element()
+		self.assertTrue(error.is_displayed())
+
+		# She starts typing into the input box to clear the error
+		self.get_item_input_box().send_keys('a')
+
+		# She is please to see that the error message dissappears
+		error = self.get_error_element()
+		self.assertFalse(error.is_displayed())
+
